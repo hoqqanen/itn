@@ -1,1 +1,3 @@
-Woo 224W project
+Keep raw data in data/raw (which is ignored)
+
+Dependency List:
