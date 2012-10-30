@@ -43,14 +43,14 @@ def graphImage(years,rname,resource):
   G = getGraph(year,resource)
   degDist = degree_distribution(G)
   print degDist #LOTS of countries with degree 0. Prune them? Pick some subset?
-  directory = 'data/raw/comtrade/explore/images/'+rname+'/degDist/'
+  directory = 'data/raw/comtrade/explore/images/'+rname
   title = rname+' deg dist year'+str(year)
-  #plot_distribution([k for (k,v) in degDist], [v for (k,v) in degDist], directory, str(year))
+  #plot_distribution([k for (k,v) in degDist], [v for (k,v) in degDist], directory+'/degDist/', str(year))
   #Visualize the network
   #ecolors = map(lambda e: e[2]['weight'], G.edges(data=True))
   pos=nx.spring_layout(G)
   nx.draw(G,pos=pos,node_size=80,with_labels=True)
-  plt.savefig('pos_influence_graph.png')
+  #plt.savefig(directory+'pos_influence_graph.png')
   plt.show()
   return 0
 
