@@ -3,6 +3,7 @@ import networkx as nx
 import os
 import pickle
 import matplotlib
+import matplotlib.pyplot as plt
 from utils import checkpath, write, plot_distribution, degree_distribution
 
 def getGraph(year,resource):
@@ -31,18 +32,26 @@ def linksAddedPerYear(years,resource):
       print [y, counter, len(addedEdges)]
   return links
 
-#Remains to be done: degree distribution network images... etc.
-
+#Remains to be done: compute consecutive year ratios on each link
+#Determine how to prune the graph//select a subset that is more meaningful
+#   or do we not mind having many nodes of degree 0?
 def linkRatio(years,resource):
   return 0
 
 def graphImage(years,rname,resource):
-  for year in years:
-    G = getGraph(year,resource)
-    items = degree_distribution(G)
-    directory = 'data/raw/comtrade/explore/images/'
-    title = rname+' deg dist year'+str(year)
-    plot_distribution([k for (k,v) in items], [v for (k,v) in items], directory, title)
+  year = years[0]
+  G = getGraph(year,resource)
+  degDist = degree_distribution(G)
+  print degDist #LOTS of countries with degree 0. Prune them? Pick some subset?
+  directory = 'data/raw/comtrade/explore/images/'+rname+'/degDist/'
+  title = rname+' deg dist year'+str(year)
+  #plot_distribution([k for (k,v) in degDist], [v for (k,v) in degDist], directory, str(year))
+  #Visualize the network
+  #ecolors = map(lambda e: e[2]['weight'], G.edges(data=True))
+  pos=nx.spring_layout(G)
+  nx.draw(G,pos=pos,node_size=80,with_labels=True)
+  plt.savefig('pos_influence_graph.png')
+  plt.show()
   return 0
 
 if __name__ == '__main__':
