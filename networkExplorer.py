@@ -2,23 +2,14 @@ import api.comtrade as ct
 import networkx as nx
 import os
 import pickle
+import matplotlib
+from utils import checkpath, write, plot_distribution, degree_distribution
 
 def getGraph(year,resource):
   comtrade_country_xml = 'data/raw/comtrade/metadata/countries.xml'
   comtrade_file = 'data/raw/comtrade/'+resource[0]+'/'+resource[1]+'_'+str(year)+'.xml'
   G = ct.load_from_xml(comtrade_file, ct.read_country_data(comtrade_country_xml))
   return G
-
-def checkpath(folderPath):
-  if not os.path.exists(folderPath):
-    os.makedirs(folderPath)
-
-def write(D,directory,filename):
-  checkpath(directory)
-  f = open(directory+filename+'.txt', 'w')
-  pickle.dump(D,f)
-  f.close()
-  return 1
 
 def linksAddedPerYear(years,resource):
   #predicates = list of pairs of lambda expressions returning true/false
@@ -45,8 +36,13 @@ def linksAddedPerYear(years,resource):
 def linkRatio(years,resource):
   return 0
 
-def graphImage(years,resource):
-  year = years[-1]
+def graphImage(years,rname,resource):
+  for year in years:
+    G = getGraph(year,resource)
+    items = degree_distribution(G)
+    directory = 'data/raw/comtrade/explore/images/'
+    title = rname+' deg dist year'+str(year)
+    plot_distribution([k for (k,v) in items], [v for (k,v) in items], directory, title)
   return 0
 
 if __name__ == '__main__':
@@ -54,6 +50,6 @@ if __name__ == '__main__':
   resources = {'fuel':['fuelOil19882011','27']}
   for r in resources:
     resource = resources[r]
-    write(linksAddedPerYear(years,resource),resource[0],'/links')
+    #write(linksAddedPerYear(years,resource),'data/raw/comtrade/explore/'+resource[0],'/links')
     #write(linkRatio(years,resource),resource[0]+'/ratios')
-    #write(graphImage(years,resource),resource[0]+'/images')
+    graphImage(years,r,resource)
