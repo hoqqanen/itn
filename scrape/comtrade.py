@@ -27,14 +27,13 @@ def scrape(**kw):
     
     Paremeters are listed at http://bitly.com/T7pWCH. The most useful are:
     
-      - cc: commodity code. See commodity code list:
-            http://comtrade.un.org/db/mr/rfCommoditiesList.aspx
+      - cc: commodity code. See commodity code list [1] or pass 'TOTAL'
+            to get the total.
+            [1] http://comtrade.un.org/db/mr/rfCommoditiesList.aspx
       - comp: if True, compress the data. (TODO: how to decompress?)
+      - px: classification format ('HS' is the most common)
       - r: reporting countries
       - y: 4-digit year
-    
-    :param cc: commodity code. See commodity code list, or pass
-               "TOTAL" to get total
     """
 
     outfile = 'data/{0}_{1}.xml'.format(kw['cc'], kw['y']) 
@@ -53,7 +52,7 @@ def scrape(**kw):
 
 if __name__ == '__main__':
     import sys
-#    for cc in range(1, 25):
-#        cc = str(cc) if cc >= 10 else ('0' + str(cc))
-    for y in YEARS:
-        scrape(**{'cc': sys.argv[1], 'y': y})
+    for cc in range(int(sys.argv[1]), int(sys.argv[2]) + 1):
+        cc = str(cc) if int(cc) >= 10 else ('0' + str(cc))
+        for y in YEARS:
+            scrape(**{'cc': cc, 'y': y})
