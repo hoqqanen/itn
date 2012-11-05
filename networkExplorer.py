@@ -4,7 +4,8 @@ import os
 import pickle
 import matplotlib
 import matplotlib.pyplot as plt
-from utils import checkpath, write, plot_distribution, degree_distribution
+from utils import checkpath, read, write, plot_distribution, degree_distribution
+import numpy as np
 
 def getGraph(year,resource):
   comtrade_country_xml = 'data/raw/comtrade/metadata/countries.xml'
@@ -35,8 +36,19 @@ def linksAddedPerYear(years,resource):
 #Remains to be done: compute consecutive year ratios on each link
 #Determine how to prune the graph//select a subset that is more meaningful
 #   or do we not mind having many nodes of degree 0?
-def linkRatio(years,resource):
-  return 0
+def extractLinkRatios(years,resource):
+  ratios = {}
+  for y in years[0:-1]:
+    ratios[y] = []
+    [G1,G2] = [getGraph(y,resource),getGraph(y+1,resource)]
+    for e in G1.edges(data=True): #e is current year edge
+      try:
+        pastEdgeData = G2[e[0]][e[1]] #If it doesn't exist we except
+        ratios[y].append((e[0],e[1],float(e[2]['weight'])/pastEdgeData['weight'],float(e[2]['weight']),pastEdgeData['weight']))
+      except KeyError:
+        bloop = 'bloop'
+    #print ratios[y]
+  return ratios
 
 def graphImage(years,rname,resource):
   year = years[0]
@@ -54,11 +66,24 @@ def graphImage(years,rname,resource):
   plt.show()
   return 0
 
+def linkRatioStats(filepath):
+  yearlyRatios = read(filepath)
+  means = []
+  for year in yearlyRatios:
+    filteredData = filter(lambda x: x[3]>100 and x[4]>100, yearlyRatios[year])
+    dataList = map(lambda x: x[2], filteredData)
+    #print filter(lambda y: (y[1]=='USA' or y[0]=='USA'), sorted(yearlyRatios[year], key=lambda x: x[2]))
+    means.append(round(np.mean(dataList)))
+  print means
+  print np.mean(means)
+  return 0
+
 if __name__ == '__main__':
   years = range(1988,2012)
   resources = {'fuel':['fuelOil19882011','27']}
   for r in resources:
     resource = resources[r]
     #write(linksAddedPerYear(years,resource),'data/raw/comtrade/explore/'+resource[0],'/links')
-    #write(linkRatio(years,resource),resource[0]+'/ratios')
+    #write(extractLinkRatios(years,resource),'data/raw/comtrade/explore/'+resource[0],'/ratios')
+    #linkRatioStats('data/raw/comtrade/explore/'+resource[0]+'/ratios')
     graphImage(years,r,resource)

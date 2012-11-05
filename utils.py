@@ -15,6 +15,12 @@ def write(D,directory,filename):
   f.close()
   return 1
 
+def read(filename):
+  f = open(filename+'.txt', 'r')
+  data = pickle.load(f)
+  f.close()
+  return data
+
 def plot_distribution(X,Y,directory,title):
   checkpath(directory)
   fig = plt.figure()
