@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 def checkpath(folderPath):
   if not os.path.exists(folderPath):
     os.makedirs(folderPath)
+  return folderPath
 
 def write(D,directory,filename):
   checkpath(directory)
@@ -21,9 +22,16 @@ def read(filename):
   f.close()
   return data
 
+def prune_countries(G):
+  naughtyCountries = read('data/raw/comtrade/metadata/naughtyCountryList')
+  for c in naughtyCountries:
+    G.remove_node(c)
+  return G
+
 def plot_distribution(X,Y,directory,title):
   checkpath(directory)
   fig = plt.figure()
+  fig.clf()
   ax = fig.add_subplot(111)
   ax.plot(X,Y)
   ax.set_xscale('log')

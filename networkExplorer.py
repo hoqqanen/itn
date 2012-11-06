@@ -4,13 +4,18 @@ import os
 import pickle
 import matplotlib
 import matplotlib.pyplot as plt
-from utils import checkpath, read, write, plot_distribution, degree_distribution
+from utils import checkpath, read, write, prune_countries, plot_distribution, degree_distribution
 import numpy as np
 
 def getGraph(year,resource):
-  comtrade_country_xml = 'data/raw/comtrade/metadata/countries.xml'
-  comtrade_file = 'data/raw/comtrade/'+resource[0]+'/'+resource[1]+'_'+str(year)+'.xml'
-  G = ct.load_from_xml(comtrade_file, ct.read_country_data(comtrade_country_xml))
+  try:
+    G = read('data/raw/comtrade/data/'+resource[0]+'/pickles/'+str(year))
+  except IOError:
+    comtrade_country_xml = 'data/raw/comtrade/metadata/countries.xml'
+    comtrade_file = 'data/raw/comtrade/data/'+resource[0]+'/'+resource[1]+'_'+str(year)+'.xml'
+    G = ct.load_from_xml(comtrade_file, ct.read_country_data(comtrade_country_xml))
+    write(G,'data/raw/comtrade/data/'+resource[0]+'/pickles/',str(year))
+  #G = prune_countries(G) Broken at the moment.
   return G
 
 def linksAddedPerYear(years,resource):
@@ -33,9 +38,6 @@ def linksAddedPerYear(years,resource):
       print [y, counter, len(addedEdges)]
   return links
 
-#Remains to be done: compute consecutive year ratios on each link
-#Determine how to prune the graph//select a subset that is more meaningful
-#   or do we not mind having many nodes of degree 0?
 def extractLinkRatios(years,resource):
   ratios = {}
   for y in years[0:-1]:
@@ -51,19 +53,19 @@ def extractLinkRatios(years,resource):
   return ratios
 
 def graphImage(years,rname,resource):
-  year = years[0]
-  G = getGraph(year,resource)
-  degDist = degree_distribution(G)
-  print degDist #LOTS of countries with degree 0. Prune them? Pick some subset?
-  directory = 'data/raw/comtrade/explore/images/'+rname
-  title = rname+' deg dist year'+str(year)
-  #plot_distribution([k for (k,v) in degDist], [v for (k,v) in degDist], directory+'/degDist/', str(year))
+  for year in years:
+    G = getGraph(year,resource)
+    degDist = degree_distribution(G)
+    print degDist #LOTS of countries with degree 0. Prune them? Pick some subset?
+    directory = 'data/raw/comtrade/explore/'+resource[0]+'/images/'+rname
+    title = rname+' deg dist year'+str(year)
+    plot_distribution([k for (k,v) in degDist], [v for (k,v) in degDist], directory+'/degDist/', str(year))
   #Visualize the network
   #ecolors = map(lambda e: e[2]['weight'], G.edges(data=True))
-  pos=nx.spring_layout(G)
-  nx.draw(G,pos=pos,node_size=80,with_labels=True)
+  #pos=nx.spring_layout(G)
+  #nx.draw(G,pos=pos,node_size=80,with_labels=True)
   #plt.savefig(directory+'pos_influence_graph.png')
-  plt.show()
+  #plt.show()
   return 0
 
 def linkRatioStats(filepath):
@@ -78,12 +80,46 @@ def linkRatioStats(filepath):
   print np.mean(means)
   return 0
 
+def trade_reciprocity(years,resource):
+  corrmeans = []
+  for year in years:
+    G = getGraph(year,resource)
+    corrcoeffs = []
+    [xs,ys] = [[],[]]
+    for country in G.nodes():
+      for e in G.edges(country):
+        try:
+          [x1,y1] = [G[e[0]][e[1]],G[e[1]][e[0]]]
+          #print [x1,y1]
+          xs.append(x1['weight'])
+          ys.append(y1['weight'])
+        except KeyError:
+          'whoops'
+    if len(xs)>1:
+      cc = np.corrcoef([xs,ys])
+      corrcoeffs.append(cc[0][1])
+    #print corrcoeffs
+    corrmeans.append(np.mean(corrcoeffs))
+    print [year,np.mean(corrcoeffs)]
+  write({'means':corrmeans, 'years':years},'data/raw/comtrade/explore/'+resource[0],'/meanReciprocityCorrelation')
+  plt.plot(years,corrmeans)
+  plt.title('Mean Correlation of Import/Export By Year')
+  directory = checkpath('data/raw/comtrade/explore/'+resource[0]+'/images/')
+  plt.savefig(directory+'meanReciprocityCorrelation.png')
+  #plt.show()
+  return 0
+
 if __name__ == '__main__':
-  years = range(1988,2012)
-  resources = {'fuel':['fuelOil19882011','27']}
+  years = range(1962,2012)
+  resources = {'total':['sitc-total', 'S1_TOTAL']}
   for r in resources:
     resource = resources[r]
+    directory = checkpath('data/raw/comtrade/explore/'+resource[0])
+    directory = checkpath('data/raw/comtrade/explore/'+resource[0]+'/images/')
+    #print nodeset
     #write(linksAddedPerYear(years,resource),'data/raw/comtrade/explore/'+resource[0],'/links')
     #write(extractLinkRatios(years,resource),'data/raw/comtrade/explore/'+resource[0],'/ratios')
     #linkRatioStats('data/raw/comtrade/explore/'+resource[0]+'/ratios')
-    graphImage(years,r,resource)
+    #graphImage(years,r,resource)
+
+    trade_reciprocity(years,resource)
