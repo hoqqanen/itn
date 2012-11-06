@@ -3,7 +3,7 @@ import pickle
 import networkx as networkx
 import matplotlib
 import matplotlib.pyplot as plt
-
+#Stupid git
 def checkpath(folderPath):
   if not os.path.exists(folderPath):
     os.makedirs(folderPath)

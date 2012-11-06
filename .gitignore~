@@ -2,4 +2,4 @@ data/raw/*
 .DS_Store
 */.DS_Store
 georgeScript.py
-*.pyc
+.gitignore

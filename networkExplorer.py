@@ -6,7 +6,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 from utils import checkpath, read, write, prune_countries, plot_distribution, degree_distribution
 import numpy as np
-
+#Foopa
 def getGraph(year,resource):
   try:
     G = read('data/raw/comtrade/data/'+resource[0]+'/pickles/'+str(year))
