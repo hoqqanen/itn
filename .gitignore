@@ -1,1 +1,5 @@
-*.py[co]
+data/raw/*
+.DS_Store
+*/.DS_Store
+georgeScript.py
+.gitignore
