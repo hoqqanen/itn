@@ -6,7 +6,45 @@ import matplotlib
 import matplotlib.pyplot as plt
 from utils import checkpath, read, write, prune_countries, plot_distribution, degree_distribution
 import numpy as np
-#Foopa
+import csv
+import scipy
+
+def getMDSCSVAbsolute(years, resource, toCountries):
+  gs={}
+
+  for y in years:
+    gs[y]=getGraph(y, resource)
+  matrixwriter = csv.writer(open(str(years[0])+"_"+str(years[-1])+resource[0]+"matrix.csv", "wb"))
+  #countrieswriter = csv.writer(open("countries.csv", "wb"))
+  #dummywriter=csv.writer(open("scratch", "wb"))
+  #rownames=[]
+  countries=gs[years[0]].nodes()
+
+  for crow in countries:
+    row=[crow, ]
+    for c in toCountries:
+      for y in years:
+        if(c in gs[y][crow]):
+          row.append(str(gs[y][crow][c]["weight"]))
+        else:
+          row.append(0)
+    try:
+      #dummywriter.writerow([crow])
+      matrixwriter.writerow(row)
+      
+      #rownames.append(crow)
+    except UnicodeEncodeError:
+      print crow
+      continue
+  #print(rownames)
+  #countrieswriter.writerow(rownames)
+
+
+
+
+
+
+
 def getGraph(year,resource):
   try:
     G = read('data/raw/comtrade/data/'+resource[0]+'/pickles/'+str(year))
@@ -14,8 +52,9 @@ def getGraph(year,resource):
     comtrade_country_xml = 'data/raw/comtrade/metadata/countries.xml'
     comtrade_file = 'data/raw/comtrade/data/'+resource[0]+'/'+resource[1]+'_'+str(year)+'.xml'
     G = ct.load_from_xml(comtrade_file, ct.read_country_data(comtrade_country_xml))
+    G = prune_countries(G) 
     write(G,'data/raw/comtrade/data/'+resource[0]+'/pickles/',str(year))
-  #G = prune_countries(G) Broken at the moment.
+  
   return G
 
 def linksAddedPerYear(years,resource):
@@ -182,7 +221,7 @@ def trade_reciprocity(years,resource):
   return 0
 
 if __name__ == '__main__':
-  years = range(1962,2012)
+  years = range(1970,1980)
   resources = {'total':['sitc-total', 'S1_TOTAL']}
   #resources = {'fuel':['fuelOil19882011', '27']}
 
@@ -200,4 +239,6 @@ if __name__ == '__main__':
     #extractLinkRatios(years,resource)
     #p_newEdge_degree(years, resource)
     #graphImage(years,r,resource)
-    macroEvolution(years, resource)
+    #macroEvolution(years, resource)
+    getMDSCSVAbsolute(years, resource, ["Afghanistan"])
+
