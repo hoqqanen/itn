@@ -1,6 +1,7 @@
 import os
 import pickle
 import networkx as networkx
+import api.comtrade as ct
 import matplotlib
 import matplotlib.pyplot as plt
 
