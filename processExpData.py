@@ -1,7 +1,7 @@
 import csv
 import networkx as nx
 import csv
-from utils import checkpath, read, write, prune_countries, plot_distribution, degree_distribution
+from utils import check_path, read, write, prune_countries, plot_distribution, degree_distribution
 
 
 years=range(1950, 2001,1)
@@ -34,12 +34,14 @@ for row in reader:
          gs[year].add_node(a, gdp=gdp_a, pop=pop_a)
         if( not b in gs[year].nodes()):
           gs[year].add_node(b, gdp=gdp_b, pop=pop_b)
-        gs[year].add_edge(a, b, weight=exp_a_b)
-        gs[year].add_edge(b, a, weight=exp_b_a)      
+        if exp_a_b>0:
+          gs[year].add_edge(a, b, weight=exp_a_b)
+        if exp_b_a>0:
+          gs[year].add_edge(b, a, weight=exp_b_a)      
     rownum += 1
     print rownum
 
 ifile.close()
 
 for year in years:
-  write(gs[year],'data/raw/essex/'+"allTrade"+'/pickles/',str(year))
+  write(gs[year],'data/raw/essex/pickles/',str(year))

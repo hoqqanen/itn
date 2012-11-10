@@ -5,18 +5,33 @@ import api.comtrade as ct
 import matplotlib
 import matplotlib.pyplot as plt
 
-def get_graph(year,resource):
-  try:
-    G = read('data/raw/comtrade/data/'+resource[0]+'/pickles/'+str(year))
-  except IOError:
-    comtrade_country_xml = 'data/raw/comtrade/metadata/countries.xml'
-    comtrade_file = 'data/raw/comtrade/data/'+resource[0]+'/'+resource[1]+'_'+str(year)+'.xml'
-    G = ct.load_from_xml(comtrade_file, ct.read_country_data(comtrade_country_xml))
+
+
+def get_graph(year, resource):
+  if resource=="essex":
+    return read("data/raw/essex/pickles/"+str(year))
+  else:
+    try:
+      G = read('data/raw/comtrade/data/'+resource[0]+'/pickles/'+str(year))
+    except IOError:
+      comtrade_country_xml = 'data/raw/comtrade/metadata/countries.xml'
+      comtrade_file = 'data/raw/comtrade/data/'+resource[0]+'/'+resource[1]+'_'+str(year)+'.xml'
+      G = ct.load_from_xml(comtrade_file, ct.read_country_data(comtrade_country_xml))
     write(G,'data/raw/comtrade/data/'+resource[0]+'/pickles/',str(year))
-  G = prune_countries(G) #Remove the naughty list
+    G = prune_countries(G) #Remove the naughty list
   return G
 
+def get_images_directory(resource):
+  if(resource=="essex"):
+    return 'data/raw/essex/images/'
+  else:
+    return 'data/raw/comtrade/explore/'+resource[0]+'/images/'
 
+def get_results_directory(resource):
+  if(resource=="essex"):
+    return 'data/raw/essex/'
+  else:
+    return 'data/raw/comtrade/explore/'+resource[0]+'/'
 
 #Stupid git
 def check_path(folderPath):
@@ -63,7 +78,8 @@ def plot_distribution(X,Y,directory,title):
   ax.set_xscale('log')
   ax.set_yscale('log')
   plt.title(title)
-  fig.savefig(directory+title+".png")
+  plt.show()
+  fig.savefig(directory+title+".pdf")
 
 def degree_distribution(G):
   degs = {}
