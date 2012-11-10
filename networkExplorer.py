@@ -175,7 +175,7 @@ def extractLinkRatios(years,resource):
     #print ratios[y]
   return ratios
 
-def visulaizeGraphs(years,resource):
+def visualizeGraphs(years,resource):
   for year in years:
     G = get_graph(year,resource)
     
@@ -269,10 +269,10 @@ if __name__ == '__main__':
     directory = check_path(get_results_directory(resource))
     directory = check_path(get_images_directory(resource))
     #print nodeset
-    write(linksAddedPerYear(years,resource),get_results_directory(resource),'links')
-    write(extractLinkRatios(years,resource),get_results_directory(resource),'ratios')
-    linkRatioStats(get_results_directory(resource)+'ratios')
-    graphImage(years,r,resource)
+    #write(linksAddedPerYear(years,resource),get_results_directory(resource),'links')
+    #write(extractLinkRatios(years,resource),get_results_directory(resource),'ratios')
+    #linkRatioStats(get_results_directory(resource)+'ratios')
+    visualizeGraphs(years,resource)
     degreeDistributions(years, resource)
     trade_reciprocity(years,resource)
     extractLinkRatios(years,resource)
