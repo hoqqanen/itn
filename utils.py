@@ -5,6 +5,19 @@ import api.comtrade as ct
 import matplotlib
 import matplotlib.pyplot as plt
 
+def convert_country_code(D,converter):
+  if type(D)==type({}):
+    newD = {}
+    for k in D:
+      newD[converter[k]] = D[k]
+  else:
+    newD = converter[D]
+  return newD
+
+def ct_to_wb(name,ctCode,wbName):
+  return wbName[ctCode[name]]
+
+
 def get_graph(year,resource):
   try:
     G = read('data/raw/comtrade/data/'+resource[0]+'/pickles/'+str(year))
