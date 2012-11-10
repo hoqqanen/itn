@@ -17,9 +17,22 @@ def get_graph(year, resource):
       comtrade_country_xml = 'data/raw/comtrade/metadata/countries.xml'
       comtrade_file = 'data/raw/comtrade/data/'+resource[0]+'/'+resource[1]+'_'+str(year)+'.xml'
       G = ct.load_from_xml(comtrade_file, ct.read_country_data(comtrade_country_xml))
-    write(G,'data/raw/comtrade/data/'+resource[0]+'/pickles/',str(year))
-    G = prune_countries(G) #Remove the naughty list
-  return G
+      write(G,'data/raw/comtrade/data/'+resource[0]+'/pickles/',str(year))
+      G = prune_countries(G) #Remove the naughty list
+    return G
+
+def convert_country_code(D,converter):
+  if type(D)==type({}):
+    newD = {}
+    for k in D:
+      newD[converter[k]] = D[k]
+  else:
+    newD = converter[D]
+  return newD
+
+def ct_to_wb(name,ctCode,wbName):
+  return wbName[ctCode[name]]
+  
 
 def get_images_directory(resource):
   if(resource=="essex"):
