@@ -1,16 +1,28 @@
 import os
 import pickle
 import networkx as networkx
+import api.comtrade as ct
 import matplotlib
 import matplotlib.pyplot as plt
-#Stupid git
-def checkpath(folderPath):
+
+def get_graph(year,resource):
+  try:
+    G = read('data/raw/comtrade/data/'+resource[0]+'/pickles/'+str(year))
+  except IOError:
+    comtrade_country_xml = 'data/raw/comtrade/metadata/countries.xml'
+    comtrade_file = 'data/raw/comtrade/data/'+resource[0]+'/'+resource[1]+'_'+str(year)+'.xml'
+    G = ct.load_from_xml(comtrade_file, ct.read_country_data(comtrade_country_xml))
+    write(G,'data/raw/comtrade/data/'+resource[0]+'/pickles/',str(year))
+  G = prune_countries(G) #Remove the naughty list
+  return G
+
+def check_path(folderPath):
   if not os.path.exists(folderPath):
     os.makedirs(folderPath)
   return folderPath
 
 def write(D,directory,filename):
-  checkpath(directory)
+  check_path(directory)
   f = open(directory+filename+'.txt', 'w')
   pickle.dump(D,f)
   f.close()
@@ -29,7 +41,7 @@ def prune_countries(G):
   return G
 
 def plot_distribution(X,Y,directory,title):
-  checkpath(directory)
+  check_path(directory)
   fig = plt.figure()
   fig.clf()
   ax = fig.add_subplot(111)

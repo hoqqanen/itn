@@ -4,7 +4,7 @@ import os
 import pickle
 import matplotlib
 import matplotlib.pyplot as plt
-from utils import checkpath, read, write, prune_countries, plot_distribution, degree_distribution
+from utils import get_graph, check_path, read, write, prune_countries, plot_distribution, degree_distribution
 import numpy as np
 import csv
 import scipy
@@ -45,17 +45,6 @@ def getMDSCSVAbsolute(years, resource, toCountries):
 
 
 
-def getGraph(year,resource):
-  try:
-    G = read('data/raw/comtrade/data/'+resource[0]+'/pickles/'+str(year))
-  except IOError:
-    comtrade_country_xml = 'data/raw/comtrade/metadata/countries.xml'
-    comtrade_file = 'data/raw/comtrade/data/'+resource[0]+'/'+resource[1]+'_'+str(year)+'.xml'
-    G = ct.load_from_xml(comtrade_file, ct.read_country_data(comtrade_country_xml))
-    G = prune_countries(G) 
-    write(G,'data/raw/comtrade/data/'+resource[0]+'/pickles/',str(year))
-  
-  return G
 
 def linksAddedPerYear(years,resource):
   #predicates = list of pairs of lambda expressions returning true/false
@@ -215,7 +204,7 @@ def trade_reciprocity(years,resource):
   write({'means':corrmeans, 'years':years},'data/raw/comtrade/explore/'+resource[0],'/meanReciprocityCorrelation')
   plt.plot(years,corrmeans)
   plt.title('Mean Correlation of Import/Export By Year')
-  directory = checkpath('data/raw/comtrade/explore/'+resource[0]+'/images/')
+  directory = check_path('data/raw/comtrade/explore/'+resource[0]+'/images/')
   plt.savefig(directory+'meanReciprocityCorrelation.png')
   #plt.show()
   return 0
@@ -227,8 +216,8 @@ if __name__ == '__main__':
 
   for r in resources:
     resource = resources[r]
-    directory = checkpath('data/raw/comtrade/explore/'+resource[0])
-    directory = checkpath('data/raw/comtrade/explore/'+resource[0]+'/images/')
+    directory = check_path('data/raw/comtrade/explore/'+resource[0])
+    directory = check_path('data/raw/comtrade/explore/'+resource[0]+'/images/')
     #print nodeset
     #write(linksAddedPerYear(years,resource),'data/raw/comtrade/explore/'+resource[0],'/links')
     #write(extractLinkRatios(years,resource),'data/raw/comtrade/explore/'+resource[0],'/ratios')
