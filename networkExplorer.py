@@ -207,7 +207,8 @@ def linkRatioStats(filepath):
   yearlyRatios = read(filepath)
   means = []
   for year in yearlyRatios:
-    if int(year)>2009:
+    print year
+    if int(year)>1996:
       filteredData = filter(lambda x: x[3]>100 and x[4]>100, yearlyRatios[year])
       # the histogram of trade
       plt.figure()
@@ -219,17 +220,19 @@ def linkRatioStats(filepath):
       plt.xlabel('Ratio')
       plt.ylabel('Probability')
       plt.title("Ratio Distribution"+str(year))
+      plt.savefig(get_images_directory(resource)+'RatioDistribution'+str(year)+'.png')
       plt.show()
 
       plt.figure()
       ratioData=map(lambda x: x[4], filteredData)
-      bins=range(0, 1000000000, 10000000)
+      bins=range(0, 1000, 100)
       hist=np.histogram(ratioData, density=True, bins=bins)[0]
       #n, bins, patches = plt.hist(map(lambda x: x[4], filteredData), normed=1, facecolor='green', alpha=0.75, bins=range(0, 1000000000, 10000000))
       plt.loglog(bins[1:],hist,'r', marker='o')
       plt.xlabel('Dollar Trade')
       plt.ylabel('Probability')
       plt.title("Dollar Distribution"+str(year))
+      plt.savefig(get_images_directory(resource)+'WeightDistribution'+str(year)+'.png')
       plt.show()
 
     
@@ -265,7 +268,7 @@ def trade_reciprocity(years,resource):
   return 0
 
 if __name__ == '__main__':
-  years = range(1990,1995)
+  years = range(1950,2001)
   #resources = {'total':['sitc-total', 'S1_TOTAL']}
   #resources = {'fuel':['fuelOil19882011', '27']}
   resources={"essex":"essex"}
@@ -275,9 +278,9 @@ if __name__ == '__main__':
     directory = check_path(get_results_directory(resource))
     directory = check_path(get_images_directory(resource))
     #print nodeset
-    write(linksAddedPerYear(years,resource),get_results_directory(resource),'links')
-    write(extractLinkRatios(years,resource),get_results_directory(resource),'ratios')
-    #linkRatioStats('data/raw/comtrade/explore/'+resource[0]+'/ratios')
+    #write(linksAddedPerYear(years,resource),get_results_directory(resource),'links')
+    #write(extractLinkRatios(years,resource),get_results_directory(resource),'ratios')
+    linkRatioStats(get_results_directory(resource)+'ratios')
     #graphImage(years,r,resource)
     #degreeDistributions(years, resource)
     #trade_reciprocity(years,resource)
