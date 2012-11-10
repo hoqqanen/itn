@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from utils import get_graph, check_path, read, write, prune_countries, plot_distribution, degree_distribution, get_images_directory, get_results_directory
 import numpy as np
 import csv
-import scipy
+#import scipy
 import numpy as np
 import matplotlib.pyplot as plt
 from random import sample
@@ -172,18 +172,16 @@ def extractLinkRatios(years,resource):
         ratios[y].append((e[0],e[1],float(e[2]['weight'])/pastEdgeData['weight'],float(e[2]['weight']),pastEdgeData['weight']))
       except KeyError:
         bloop = 'bloop'
-    #print ratios[y]
   return ratios
 
 def visualizeGraphs(years,resource):
   for year in years:
     G = get_graph(year,resource)
-    
-  #Visualize the network
     ecolors = map(lambda e: e[2]['weight'], G.edges(data=True))
     pos=nx.spring_layout(G)
     nx.draw(G,pos=pos,node_size=80,with_labels=True)
     plt.savefig(get_images_directory(resource)+"graph"+str(year)+'.png')
+    plt.clf()
   return 0
 
 def degreeDistributions(years, resource):
@@ -194,7 +192,7 @@ def degreeDistributions(years, resource):
       degrees.append(len(g[n]))
     plt.hist(degrees)
     plt.savefig(get_images_directory(resource)+'degreeHist'+str(y)+'.png')
-
+    plt.clf()
 
 
 def linkRatioStats(filepath):
@@ -226,7 +224,7 @@ def linkRatioStats(filepath):
       plt.ylabel('Probability')
       plt.title("Dollar Distribution"+str(year))
       plt.savefig(get_images_directory(resource)+'WeightDistribution'+str(year)+'.png')
-
+      plt.clf()
     
   return 0
 
@@ -256,6 +254,7 @@ def trade_reciprocity(years,resource):
   plt.title('Mean Correlation of Import/Export By Year')
   directory = get_images_directory(resource)
   plt.savefig(directory+'meanReciprocityCorrelation.png')
+  plt.clf()
   return 0
 
 if __name__ == '__main__':
