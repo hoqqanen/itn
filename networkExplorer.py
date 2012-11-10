@@ -8,41 +8,78 @@ from utils import get_graph, check_path, read, write, prune_countries, plot_dist
 import numpy as np
 import csv
 import scipy
+import numpy as np
+import matplotlib.pyplot as plt
 
-def getMDSCSVAbsolute(years, resource, toCountries):
+def PCA(years, resource, toCountries, type):
   gs={}
-
   for y in years:
-    gs[y]=getGraph(y, resource)
-  matrixwriter = csv.writer(open(str(years[0])+"_"+str(years[-1])+resource[0]+"matrix.csv", "wb"))
-  #countrieswriter = csv.writer(open("countries.csv", "wb"))
-  #dummywriter=csv.writer(open("scratch", "wb"))
-  #rownames=[]
+    gs[y]=getGraph(y)
+    
   countries=gs[years[0]].nodes()
+  n=len(years)*len(toCountries)
+  m=len(countries)
 
-  for crow in countries:
-    row=[crow, ]
-    for c in toCountries:
-      for y in years:
-        if(c in gs[y][crow]):
-          row.append(str(gs[y][crow][c]["weight"]))
-        else:
-          row.append(0)
-    try:
-      #dummywriter.writerow([crow])
-      matrixwriter.writerow(row)
-      
-      #rownames.append(crow)
-    except UnicodeEncodeError:
-      print crow
-      continue
-  #print(rownames)
-  #countrieswriter.writerow(rownames)
+  a=np.ones((m,n))
+  #print a
+  
+
+  for k in range(len(countries)):
+    for i in range(len(years)):
+      for j in range(len(toCountries)):
+        try:
+          print gs[years[i]][countries[k]][toCountries[j]]["weight"]
+          a[k, (i+1)*(j+1)-1]=gs[years[i]][countries[k]][toCountries[j]]["weight"]
+        except:
+          pass
+  #print a
+
+  if(type=="proportion"):
+    cy=np.zeros((m, len(years)))
+    for c in range(m):
+      print countries[c]
+      for y in range(len(years)):
+        tt=sum([gs[years[y]][countries[c]][to]["weight"] for to in gs[years[y]][countries[c]]])
+        print tt, len(gs[years[y]][countries[c]])
+        cy[c, y]=tt
+  print cy
+
+  for j in range(n):
+    avg=sum(a[:,j])/float(m)
+    print "avg", avg
+    a[:,j]=a[:,j]-avg
+    var=np.dot(a[:,j], a[:,j])
+    print "var", var
+    a[:,j]=a[:,j]/var**0.5
+    print np.dot(a[:,j], a[:,j])
+  #print a[:, 1:4]
+
+  u,s,v=np.linalg.svd(a)
+  plt.plot(s)
+  plt.show()
+  plt.scatter(u[:,0]*s[0], u[:,1]*s[1])
+  plt.show()
+
+  labels = countries
+  plt.subplots_adjust(bottom = 0.1)
+  plt.scatter(
+    u[:,0]*s[0], u[:,1]*s[1], marker = 'o', c = u[:,0]*s[0], s = np.ones(len(u[:,1])),
+    cmap = plt.get_cmap('Spectral'))
+  for label, x, y in zip(labels, u[:,0]*s[0], u[:,1]*s[1]):
+    plt.annotate(
+        label, 
+        xy = (x, y), xytext = (-20, 20),
+        textcoords = 'offset points', ha = 'right', va = 'bottom',
+        bbox = dict(boxstyle = 'round,pad=0.5', fc = 'yellow', alpha = 0.5),
+        arrowprops = dict(arrowstyle = '->', connectionstyle = 'arc3,rad=0'))
+
+  #plt.show()
 
 
 
 
-
+def getGraph(year):
+  return read("data/raw/essex/allTrade/pickles/"+str(year))
 
 
 
@@ -210,7 +247,7 @@ def trade_reciprocity(years,resource):
   return 0
 
 if __name__ == '__main__':
-  years = range(1970,1980)
+  years = range(1990,2000)
   resources = {'total':['sitc-total', 'S1_TOTAL']}
   #resources = {'fuel':['fuelOil19882011', '27']}
 
@@ -229,5 +266,5 @@ if __name__ == '__main__':
     #p_newEdge_degree(years, resource)
     #graphImage(years,r,resource)
     #macroEvolution(years, resource)
-    getMDSCSVAbsolute(years, resource, ["Afghanistan"])
+    PCA(years, resource, ["Afghanistan"], "proportion")
 

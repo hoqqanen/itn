@@ -16,6 +16,9 @@ def get_graph(year,resource):
   G = prune_countries(G) #Remove the naughty list
   return G
 
+
+
+#Stupid git
 def check_path(folderPath):
   if not os.path.exists(folderPath):
     os.makedirs(folderPath)
@@ -36,8 +39,19 @@ def read(filename):
 
 def prune_countries(G):
   naughtyCountries = read('data/raw/comtrade/metadata/naughtyCountryList')
+  #G["India"]=G["India, excl. Sikkim"]
+  naughtyCountries.extend(["US Misc. Pacific Isds", "Other Asia, nes",\
+   "Fmr Rhodesia Nyas", "United States Minor Outlying Islands", "Fmr Tanganyika",\
+    "Bunkers", "South Georgia and the South Sandwich Islands", "Br. Indian Ocean Terr.", \
+    "Fmr Panama, excl.Canal Zone", "India, excl. Sikkim", "So. African Customs Union"\
+    "Saint Kitts, Nevis and Anguilla", "China, Macao SAR","Antarctica"  \
+    ])
   for c in naughtyCountries:
-    G.remove_node(c)
+    try:
+      G.remove_node(c)
+      print "removed node: ", c
+    except:
+      pass
   return G
 
 def plot_distribution(X,Y,directory,title):
