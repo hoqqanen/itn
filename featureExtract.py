@@ -60,6 +60,12 @@ def f_macro(G,fn):
 def f_pagerank(G,year=False):
   return nx.pagerank(G)
 
+def f_hits_hubs(G,year=False):
+  return nx.hits_numpy(G)[0]
+
+def f_hits_authorities(G,year=False):
+  return nx.hits_numpy(G)[1]
+
 def f_degree(G,year=False):
   return f_macro(G,lambda G,n: G.degree(n))
 
@@ -119,13 +125,15 @@ def feature_extraction(years,featureDict):
 
 if __name__ == '__main__':
   years = range(2000,2001)
-  featureDict = {'pagerank':f_pagerank, \
+  featureDict = {'gdp rank': f_gdp_rank, \
+    'absolute gdp': f_gdp_abs, \
+    'pagerank':f_pagerank, \
     'degree':f_degree, \
     'weighted edge out sum':f_weight_sum, \
     'weighted edge in sum':f_reverse_weight_sum, \
     'number of triangles': f_triangles, \
-    'absolute gdp': f_gdp_abs, \
-    'gdp rank': f_gdp_rank, \
-    'clustering': f_clustering}
+    'clustering': f_clustering, \
+    'hits hubs': f_hits_hubs, \
+    'hits authorities': f_hits_authorities}
   featureData = feature_extraction(years,featureDict)
   
