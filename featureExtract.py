@@ -117,7 +117,7 @@ def feature_extraction(years,featureDict):
   return featureData
 
 if __name__ == '__main__':
-  years = range(2000,2001)
+  years = range(1999,2001)
   featureDict = {'pagerank':f_pagerank, \
     'degree':f_degree, \
     'weighted edge out sum':f_weight_sum, \
