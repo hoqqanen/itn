@@ -77,13 +77,10 @@ def f_triangles(G,year=False):
   return f_macro(G.to_undirected(),lambda G, n: nx.triangles(G,n))
 
 def f_clustering(G,year=False):
-  return f_macro(G.to_undirected(),lambda G,n: nx.clustering(G,n,'weight'))
+  return f_macro(G.to_undirected(),lambda G, n: nx.clustering(G,n,'weight'))
 
 def f_gdp_abs(G,year):
-  fDat = {}
-  for n in G.nodes():
-    fDat[n] = G.node[n]['gdp']
-  return fDat
+  return f_macro(G, lambda G, n: G.node[n]['gdp'])
 
 def f_gdp_rank(G,year):
   absGDP = f_gdp_abs(G,year)
