@@ -122,12 +122,12 @@ def p_newEdge_degree(years,resource):
     for e in addedEdges:
       toCounts.append(len(G2[e[1]]))
       fromCounts.append(len(G2[e[0]]))
-
-  plt.hist(toCounts, normed=False)
+  plt.clf()
+  plt.hist(toCounts, normed=False, bins=range(0, 200, 10))
   plt.title("p(new link to|d)")
   plt.savefig(get_images_directory(resource)+'p(new link to|d).png')
-
-  plt.hist(fromCounts, normed=False)
+  plt.clf()
+  plt.hist(fromCounts, normed=False,  bins=range(0, 200, 10))
   plt.title("p(new link from|d)")
   plt.savefig(get_images_directory(resource)+'p(new link from|d).png')
 
@@ -148,10 +148,12 @@ def macroEvolution(years, resource):
     g=get_graph(y,resource)
     densities.append(len(g.edges())/float(len(g.nodes())))
     diameters.append(SampledDiameter(g))
+  plt.clf()
   plt.plot(years, densities)
   plt.title("Density Evolution")
   plt.savefig(get_images_directory(resource)+'density'+'.png')
 
+  plt.clf()
   plt.plot(years, diameters)
   plt.title("Diameter Evolution")
   plt.savefig(get_images_directory(resource)+'diameter'+'.png')
@@ -177,11 +179,12 @@ def extractLinkRatios(years,resource):
 def visualizeGraphs(years,resource):
   for year in years:
     G = get_graph(year,resource)
+    plt.clf()
+  #Visualize the network
     ecolors = map(lambda e: e[2]['weight'], G.edges(data=True))
     pos=nx.spring_layout(G)
     nx.draw(G,pos=pos,node_size=80,with_labels=True)
     plt.savefig(get_images_directory(resource)+"graph"+str(year)+'.png')
-    plt.clf()
   return 0
 
 def degreeDistributions(years, resource):
@@ -190,6 +193,7 @@ def degreeDistributions(years, resource):
     degrees=[]
     for n in g.nodes():
       degrees.append(len(g[n]))
+    plt.clf()
     plt.hist(degrees)
     plt.savefig(get_images_directory(resource)+'degreeHist'+str(y)+'.png')
     plt.clf()
@@ -203,7 +207,7 @@ def linkRatioStats(filepath):
     if int(year)>=1950:
       filteredData = filter(lambda x: x[3]>100 and x[4]>100, yearlyRatios[year])
       # the histogram of trade
-      plt.figure()
+      plt.clf()
       ratioData=map(lambda x: x[2], filteredData)
       bins=np.arange(0, 3, 0.01)
       hist=np.histogram(ratioData, density=True, bins=bins)[0]
@@ -214,7 +218,7 @@ def linkRatioStats(filepath):
       plt.title("Ratio Distribution"+str(year))
       plt.savefig(get_images_directory(resource)+'RatioDistribution'+str(year)+'.png')
 
-      plt.figure()
+      plt.clf()
       ratioData=map(lambda x: x[4], filteredData)
       bins=range(0, 1000, 100)
       hist=np.histogram(ratioData, density=True, bins=bins)[0]
@@ -224,7 +228,6 @@ def linkRatioStats(filepath):
       plt.ylabel('Probability')
       plt.title("Dollar Distribution"+str(year))
       plt.savefig(get_images_directory(resource)+'WeightDistribution'+str(year)+'.png')
-      plt.clf()
     
   return 0
 
@@ -250,6 +253,7 @@ def trade_reciprocity(years,resource):
     corrmeans.append(np.mean(corrcoeffs))
     print [year,np.mean(corrcoeffs)]
   write({'means':corrmeans, 'years':years},get_results_directory(resource),'meanReciprocityCorrelation')
+  plt.clf()
   plt.plot(years,corrmeans)
   plt.title('Mean Correlation of Import/Export By Year')
   directory = get_images_directory(resource)
@@ -271,10 +275,9 @@ if __name__ == '__main__':
     #write(linksAddedPerYear(years,resource),get_results_directory(resource),'links')
     #write(extractLinkRatios(years,resource),get_results_directory(resource),'ratios')
     #linkRatioStats(get_results_directory(resource)+'ratios')
-    visualizeGraphs(years,resource)
+    #visualizeGraphs(years,resource)
     degreeDistributions(years, resource)
     trade_reciprocity(years,resource)
-    extractLinkRatios(years,resource)
     p_newEdge_degree(years, resource)
     macroEvolution(years, resource)
     #PCA(years, resource, ["AFG"], "proportion")
