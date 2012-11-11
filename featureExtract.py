@@ -50,14 +50,18 @@ def f_to_csv(featureData,filepath,year):
 
 
 ###Feature Functions all have type signature G -> dict of {countryCodes: values}
+def f_macro(G,fn):
+  """
+  A special feature extraction utility function that takes 
+  a graph and a lambda fn which has signature G,n -> val.
+  """
+  return dict(zip(G.nodes(),map(lambda n:fn(G,n),G.nodes())))
+
 def f_pagerank(G,year=False):
   return nx.pagerank(G)
 
 def f_degree(G,year=False):
-  fDat = {}
-  for n in G.nodes():
-    fDat[n] = G.degree(n)
-  return fDat
+  return f_macro(G,lambda G,n: G.degree(n))
 
 def f_weight_sum(G,year=False):
   fDat = {}
@@ -70,17 +74,13 @@ def f_reverse_weight_sum(G,year=False):
   return f_weight_sum(G.reverse(copy=True))
 
 def f_triangles(G,year=False):
-  fDat = {}
-  Gundirected = G.to_undirected()
-  for n in Gundirected.nodes():
-    fDat[n] = nx.triangles(Gundirected,n)
-  return fDat
+  return f_macro(G.to_undirected(),lambda G, n: nx.triangles(G,n))
+
+def f_clustering(G,year=False):
+  return f_macro(G.to_undirected(),lambda G, n: nx.clustering(G,n,'weight'))
 
 def f_gdp_abs(G,year):
-  fDat = {}
-  for country in G.nodes():
-    fDat[country] = G.node[country]['gdp']
-  return fDat
+  return f_macro(G, lambda G, n: G.node[n]['gdp'])
 
 def f_gdp_rank(G,year):
   absGDP = f_gdp_abs(G,year)
@@ -91,6 +91,7 @@ def f_gdp_rank(G,year):
     fDat[e[0]] = rank
     rank += 1
   return fDat
+
 
 
 ###Extraction Code
@@ -124,6 +125,7 @@ if __name__ == '__main__':
     'weighted edge in sum':f_reverse_weight_sum, \
     'number of triangles': f_triangles, \
     'absolute gdp': f_gdp_abs, \
-    'gdp rank': f_gdp_rank}
+    'gdp rank': f_gdp_rank, \
+    'clustering': f_clustering}
   featureData = feature_extraction(years,featureDict)
   
