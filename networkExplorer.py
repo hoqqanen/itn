@@ -11,8 +11,41 @@ import csv
 import numpy as np
 import matplotlib.pyplot as plt
 from random import sample
+from featureExtract import getFeatureMatrix
 
-def PCA(years, resource, toCountries, typen):
+def PCA(a, labels):
+  n=a.shape[1]
+  m=a.shape[0]
+  for j in range(n):
+    avg=sum(a[:,j])/float(m)
+    print "avg", avg
+    a[:,j]=a[:,j]-avg
+    var=np.dot(a[:,j], a[:,j])
+    print "var", var
+    a[:,j]=a[:,j]/var**0.5
+    print np.dot(a[:,j], a[:,j])
+
+  u,s,v=np.linalg.svd(a)
+  plt.plot(s)
+  plt.show()
+  plt.scatter(u[:,0]*s[0], u[:,1]*s[1])
+  plt.show()
+
+  plt.subplots_adjust(bottom = 0.1)
+  plt.scatter(
+    u[:,0]*s[0], u[:,1]*s[1], marker = 'o', c = u[:,0]*s[0], s = np.ones(len(u[:,1])),
+    cmap = plt.get_cmap('Spectral'))
+  for label, x, y in zip(labels, u[:,0]*s[0], u[:,1]*s[1]):
+    plt.annotate(
+        label, 
+        xy = (x, y), xytext = (-20, 20),
+        textcoords = 'offset points', ha = 'right', va = 'bottom',
+        bbox = dict(boxstyle = 'round,pad=0.5', fc = 'yellow', alpha = 0.5),
+        arrowprops = dict(arrowstyle = '->', connectionstyle = 'arc3,rad=0'))
+
+  plt.show()
+
+def getTradeMatrix(years, resource, toCountries, typen):
   assert(len(toCountries)==1)
   gs={}
   cList=[]
@@ -49,37 +82,6 @@ def PCA(years, resource, toCountries, typen):
       for y in range(len(years)):
         a[c,y]=(a[c,y]/float(cy[c,y]))*100
         print a[c,y]
-  
-
-  for j in range(n):
-    avg=sum(a[:,j])/float(m)
-    print "avg", avg
-    a[:,j]=a[:,j]-avg
-    var=np.dot(a[:,j], a[:,j])
-    print "var", var
-    a[:,j]=a[:,j]/var**0.5
-    print np.dot(a[:,j], a[:,j])
-
-  u,s,v=np.linalg.svd(a)
-  plt.plot(s)
-  plt.show()
-  plt.scatter(u[:,0]*s[0], u[:,1]*s[1])
-  plt.show()
-
-  labels = countries
-  plt.subplots_adjust(bottom = 0.1)
-  plt.scatter(
-    u[:,0]*s[0], u[:,1]*s[1], marker = 'o', c = u[:,0]*s[0], s = np.ones(len(u[:,1])),
-    cmap = plt.get_cmap('Spectral'))
-  for label, x, y in zip(labels, u[:,0]*s[0], u[:,1]*s[1]):
-    plt.annotate(
-        label, 
-        xy = (x, y), xytext = (-20, 20),
-        textcoords = 'offset points', ha = 'right', va = 'bottom',
-        bbox = dict(boxstyle = 'round,pad=0.5', fc = 'yellow', alpha = 0.5),
-        arrowprops = dict(arrowstyle = '->', connectionstyle = 'arc3,rad=0'))
-
-  plt.show()
 
 
 
@@ -276,9 +278,11 @@ if __name__ == '__main__':
     #write(extractLinkRatios(years,resource),get_results_directory(resource),'ratios')
     #linkRatioStats(get_results_directory(resource)+'ratios')
     #visualizeGraphs(years,resource)
-    degreeDistributions(years, resource)
-    trade_reciprocity(years,resource)
-    p_newEdge_degree(years, resource)
-    macroEvolution(years, resource)
+    #degreeDistributions(years, resource)
+    #trade_reciprocity(years,resource)
+    #p_newEdge_degree(years, resource)
+    #macroEvolution(years, resource)
     #PCA(years, resource, ["AFG"], "proportion")
+    a, labels=getFeatureMatrix(1999)
+    PCA(a, labels)
 

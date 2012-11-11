@@ -5,6 +5,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import csv
 
+
+
 ###Special Utility
 def feature_reformat(featureData):
   """
@@ -92,6 +94,14 @@ def f_gdp_rank(G,year):
     rank += 1
   return fDat
 
+featureDict = {'pagerank':f_pagerank, \
+    'degree':f_degree, \
+    'weighted edge out sum':f_weight_sum, \
+    'weighted edge in sum':f_reverse_weight_sum, \
+    'number of triangles': f_triangles, \
+    'absolute gdp': f_gdp_abs, \
+    'gdp rank': f_gdp_rank, \
+    'clustering': f_clustering}
 
 
 ###Extraction Code
@@ -117,15 +127,28 @@ def feature_extraction(years,featureDict):
     f_to_csv(featureData[year],'data/raw/essex/features/csv/',str(year))
   return featureData
 
+
+def getFeatureMatrix(year):
+  
+  G = get_graph(year,'essex')
+  n=len(featureDict)
+  countries=G.nodes()
+  m=len(countries)
+  a=np.ones((m,n))
+  i=0
+  for f in featureDict:
+    j=0
+    feature = featureDict[f](G,year)
+    for c in countries:
+      a[j][i]=feature[c]
+      j+=1
+    i+=1
+  
+  return a, countries
+
+
+
 if __name__ == '__main__':
   years = range(1999,2001)
-  featureDict = {'pagerank':f_pagerank, \
-    'degree':f_degree, \
-    'weighted edge out sum':f_weight_sum, \
-    'weighted edge in sum':f_reverse_weight_sum, \
-    'number of triangles': f_triangles, \
-    'absolute gdp': f_gdp_abs, \
-    'gdp rank': f_gdp_rank, \
-    'clustering': f_clustering}
   featureData = feature_extraction(years,featureDict)
   
