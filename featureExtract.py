@@ -98,12 +98,31 @@ def f_gdp_rank(G,year):
     rank += 1
   return fDat
 
+def f_distance_pairs(G, year):
+    """Return a dict that maps country code tuples to distance values. Since
+    these values don't change over time, we can build them just once.
+    """
+    try:
+        return f_distance_pairs.data
+    except AttributeError:
+        pass
 
+    returned = {}
+    with open('data/raw/distances.csv', 'r') as f:
+        reader = csv.reader(f)
+        for line in reader:
+            key = (line[0], line[1])  # commodity codes
+            value = float(line[2])    # distance in kilometers
+            returned[key] = value
+
+    # Cache data for later calls
+    f_distance_pairs.data = returned
+    return returned
 
 ###Extraction Code
 def feature_extraction(years,featureDict):
   """
-  Saves pickle of and returns an dict of feature dicts in the form
+  Saves pickle of and returns a dict of feature dicts in the form
         {year:{featureName:{countryCode:featureValue}}}
   :param years: a list e.g. range(1980,2000)
   :param featureDict: a dictionary of features in the form
@@ -125,15 +144,17 @@ def feature_extraction(years,featureDict):
 
 if __name__ == '__main__':
   years = range(2000,2001)
-  featureDict = {'gdp rank': f_gdp_rank, \
-    'absolute gdp': f_gdp_abs, \
-    'pagerank':f_pagerank, \
-    'degree':f_degree, \
-    'weighted edge out sum':f_weight_sum, \
-    'weighted edge in sum':f_reverse_weight_sum, \
-    'number of triangles': f_triangles, \
-    'clustering': f_clustering, \
-    'hits hubs': f_hits_hubs, \
-    'hits authorities': f_hits_authorities}
+  featureDict = {'gdp rank': f_gdp_rank,
+    'absolute gdp': f_gdp_abs,
+    'pagerank':f_pagerank,
+    'degree':f_degree,
+    'weighted edge out sum':f_weight_sum,
+    'weighted edge in sum':f_reverse_weight_sum,
+    'number of triangles': f_triangles,
+    'clustering': f_clustering,
+    'hits hubs': f_hits_hubs,
+    'hits authorities': f_hits_authorities,
+    'distance pairs': f_distance_pairs,
+    }
   featureData = feature_extraction(years,featureDict)
   
