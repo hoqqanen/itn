@@ -4,6 +4,7 @@ import operator
 import numpy as np
 import matplotlib.pyplot as plt
 import csv
+import copy
 
 
 
@@ -51,6 +52,63 @@ def f_to_csv(featureData,filepath,year):
   return True
 
 
+
+def f_export(G, countries, year):
+  expDat={}
+  for c1 in countries:
+    for c2 in countries:
+      try:
+        exp=G[c1][c2]["weight"]
+      except:
+        exp=0
+      expDat[(c1, c2)]=exp
+  return expDat
+
+def f_export_diff(G1, countries, year):
+  expDiffDat={}
+  G0=get_graph(year-1, "essex")
+  for c1 in countries:
+    for c2 in countries:
+      try:
+        exp0=G0[c1][c2]["weight"]
+      except:
+        exp0=0
+      try:
+        exp1=G1[c1][c2]["weight"]
+      except:
+        exp1=0
+      expDiffDat[(c1, c2)]=exp1-exp0
+  return expDiffDat
+
+def f_import(G, countries, year):
+  impDat={}
+  for c1 in countries:
+    for c2 in countries:
+      try:
+        imp=G[c2][c1]["weight"]
+      except:
+        imp=0
+      impDat[(c1, c2)]=imp
+  return impDat
+
+def f_import_diff(G1, countries, year):
+  impDiffDat={}
+  G0=get_graph(year-1, "essex")
+  for c1 in countries:
+    for c2 in countries:
+      try:
+        imp0=G0[c2][c1]["weight"]
+      except:
+        imp0=0
+      try:
+        imp1=G1[c2][c1]["weight"]
+      except:
+        imp1=0
+      impDiffDat[(c1, c2)]=imp1-imp0
+  return impDiffDat
+
+
+
 ###Feature Functions all have type signature G -> dict of {countryCodes: values}
 def f_macro(G,fn):
   """
@@ -61,6 +119,12 @@ def f_macro(G,fn):
 
 def f_pagerank(G,year=False):
   return nx.pagerank(G)
+
+def f_hits_hubs(G,year=False):
+  return nx.hits_numpy(G)[0]
+
+def f_hits_authorities(G,year=False):
+  return nx.hits_numpy(G)[1]
 
 def f_degree(G,year=False):
   return f_macro(G,lambda G,n: G.degree(n))
@@ -94,18 +158,25 @@ def f_gdp_rank(G,year):
     rank += 1
   return fDat
 
-featureDict = {'pagerank':f_pagerank, \
+nodefeatureDict = {'gdp rank': f_gdp_rank, \
+    'absolute gdp': f_gdp_abs, \
+    'pagerank':f_pagerank, \
     'degree':f_degree, \
     'weighted edge out sum':f_weight_sum, \
     'weighted edge in sum':f_reverse_weight_sum, \
     'number of triangles': f_triangles, \
-    'absolute gdp': f_gdp_abs, \
-    'gdp rank': f_gdp_rank, \
-    'clustering': f_clustering}
+    'clustering': f_clustering, \
+    'hits hubs': f_hits_hubs, \
+    'hits authorities': f_hits_authorities}
+
+edgefeatureDict={ 'export': f_export, \
+    'import': f_import, \
+    'export diff': f_export_diff, \
+    'import diff': f_import_diff}
 
 
 ###Extraction Code
-def feature_extraction(years,featureDict):
+def node_feature_extraction(years,featureDict):
   """
   Saves pickle of and returns an dict of feature dicts in the form
         {year:{featureName:{countryCode:featureValue}}}
@@ -128,27 +199,84 @@ def feature_extraction(years,featureDict):
   return featureData
 
 
-def getFeatureMatrix(year):
+
+###Extraction Code
+def edge_feature_extraction(years, countries, featureDict):
   
-  G = get_graph(year,'essex')
-  n=len(featureDict)
-  countries=G.nodes()
-  m=len(countries)
-  a=np.ones((m,n))
-  i=0
-  for f in featureDict:
-    j=0
-    feature = featureDict[f](G,year)
-    for c in countries:
-      a[j][i]=feature[c]
-      j+=1
-    i+=1
+  featureData = {}
+  for year in years:
+    print year
+    G = get_graph(year,'essex')
+    for f in featureDict:
+      featureData[f+str(year)] = featureDict[f](G, countries ,year)
+  return featureData
+
+
+
+def convertNodalFeaturesToEdgeFeatures(countries,years, nodefeatureDict):
+  edgeData={}
+  for year in years:
+    for feature in nodefeatureDict[year]:
+      f1=feature+"c1"+str(year)
+      f2=feature+"c2"+str(year)
+      edgeData[f1]={}
+      edgeData[f2]={}
+      for c1 in countries:
+       for c2 in countries:
+          edgeData[f1][(c1, c2)]=nodefeatureDict[year][feature][c1]
+          edgeData[f2][(c2, c1)]=nodefeatureDict[year][feature][c2]
+  return edgeData
+
+
+def getEdgeFeatureCSV(years):
+  gs={}
+  cList=[]
+  As=[]
   
-  return a, countries
+  for y in years:
+    gs[y]=get_graph(y, "essex")
+    cList.append(set(gs[y].nodes()))
+  countries = list(set.intersection(*cList))
+
+  
+  edgefeatureYears=years[:-1]
+  nodefeatureYear=years[-2]
+  nodefeatureYears=[nodefeatureYear]
+
+  nodefeatures=node_feature_extraction(nodefeatureYears,nodefeatureDict)
+  edgefeatures=edge_feature_extraction(edgefeatureYears, countries, edgefeatureDict)
+  nodeToEdgeFeatures=convertNodalFeaturesToEdgeFeatures(countries, nodefeatureYears, nodefeatures)
+  edgefeatures.update(nodeToEdgeFeatures)
+
+  features=edgefeatures.keys()
+  print features
+  filename=open('edgedata.csv', 'wb')
+  writer = csv.writer(filename)
+  fnames=copy.deepcopy(features)
+  fnames.append("t")
+  fnames.insert(0, "edge")
+  writer.writerow(fnames)
+  for c1 in countries:
+    for c2 in countries:
+      row=[c1+"_"+c2, ]
+      for f in features:
+        row.append(edgefeatures[f][(c1, c2)])
+      try:
+        t=gs[years[-1]][c1][c2]["weight"]
+      except:
+        t=0
+      row.append(t)
+      writer.writerow(row)
+
+
+
+
+    
+
 
 
 
 if __name__ == '__main__':
-  years = range(1999,2001)
-  featureData = feature_extraction(years,featureDict)
+  years = range(1999,2001)  
+  featureData = getEdgeFeatureCSV(years)
   
