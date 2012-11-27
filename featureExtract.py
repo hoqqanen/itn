@@ -146,7 +146,10 @@ def f_clustering(G,year=False):
   return f_macro(G.to_undirected(),lambda G, n: nx.clustering(G,n,'weight'))
 
 def f_gdp_abs(G,year):
-  return f_macro(G, lambda G, n: G.node[n]['gdp'])
+  return f_macro(G, lambda G, n: G.node[n]['gdp']*G.node[n]['pop'])
+
+def f_population(G,year):
+  return f_macro(G, lambda G, n: G.node[n]['pop'])
 
 def f_gdp_rank(G,year):
   absGDP = f_gdp_abs(G,year)
@@ -160,6 +163,7 @@ def f_gdp_rank(G,year):
 
 nodefeatureDict = {'gdp rank': f_gdp_rank, \
     'absolute gdp': f_gdp_abs, \
+    'population': f_population, \
     'pagerank':f_pagerank, \
     'degree':f_degree, \
     'weighted edge out sum':f_weight_sum, \
