@@ -12,8 +12,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 #from random import 
 import math
-#from featureExtract import getFeatureMatrix
+from featureExtract import f_distance_pairs
 from plfit import plfit
+from scipy import stats
 
 
 
@@ -233,6 +234,32 @@ def linkRatioStats(filepath):
     
   return 0
 
+def dist_cor(years, resource):
+  cors=[]
+  for year in years:
+    G = get_graph(year,resource)
+    distDict=f_distance_pairs(G, G.nodes(), year)
+    E=G.edges(data=True)
+    ws=[]
+    ds=[]
+    for e in E:
+      ws.append(e[2]["weight"])
+      ds.append(distDict[(e[0], e[1])])
+    cors.append(stats.pearsonr(ws, ds)[0])
+  plt.clf()
+  print len(years)
+  print len(cors)
+  print years
+  print cors
+  plt.plot(years, cors)
+  plt.title("Correlation of Distance and Trade Volume")
+  plt.xlabel("year")
+  plt.ylabel("correlation")
+  plt.show()
+
+
+
+
 def trade_reciprocity(years,resource):
   corrmeans = []
   for year in years:
@@ -278,13 +305,13 @@ if __name__ == '__main__':
     #print nodeset
     #write(linksAddedPerYear(years,resource),get_results_directory(resource),'links')
     #write(extractLinkRatios(years,resource),get_results_directory(resource),'ratios')
-    linkRatioStats(get_results_directory(resource)+'ratios')
-    degreeDistributions(years, resource)
-    trade_reciprocity(years,resource)
-    p_newEdge_degree(years, resource)
-    macroEvolution(years, resource)
-    visualizeGraphs(years,resource)
-
+    #linkRatioStats(get_results_directory(resource)+'ratios')
+    #degreeDistributions(years, resource)
+    #trade_reciprocity(years,resource)
+    #p_newEdge_degree(years, resource)
+    #macroEvolution(years, resource)
+    #visualizeGraphs(years,resource)
+    dist_cor(years, resource)
     #PCA(years, resource, ["AFG"], "proportion")
     #a, labels=getFeatureMatrix(1999)
     #getTradeMatrix(years, resource, None, "raw" )
