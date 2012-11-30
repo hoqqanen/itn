@@ -141,8 +141,11 @@ def f_macro(G,fn):
   """
   return dict(zip(G.nodes(),map(lambda n:fn(G,n),G.nodes())))
 
-def f_pagerank(G,year=False):
+def f_weighted_pagerank(G,year=False):
   return nx.pagerank(G)
+
+def f_pagerank(G,year=False):
+  return nx.pagerank(G, weight=None)
 
 def f_hits_hubs(G,year=False):
   return nx.hits_numpy(G)[0]
@@ -170,11 +173,14 @@ def f_clustering(G,year=False):
   return f_macro(G.to_undirected(),lambda G, n: nx.clustering(G,n,'weight'))
 
 def f_gdp_abs(G,year):
-  return f_macro(G, lambda G, n: G.node[n]['gdp'])
+  return f_macro(G, lambda G, n: G.node[n]['gdp']*G.node[n]['pop'])
+
+def f_population(G,year):
+  return f_macro(G, lambda G, n: G.node[n]['pop'])
 
 def f_gdp_rank(G,year):
   absGDP = f_gdp_abs(G,year)
-  sortedTuples = sorted(absGDP.iteritems(), key=operator.itemgetter(1), reverse=True)
+  sortedTuples = sorted(absGDP.iteritems(), key=operator.itemgetter(1))
   fDat = {}
   rank = 1
   for e in sortedTuples:
@@ -183,8 +189,11 @@ def f_gdp_rank(G,year):
   return fDat
 
 nodefeatureDict = {'gdp rank': f_gdp_rank, \
+
     'gdp': f_gdp_abs, \
+    'pop': f_population, \
     'pagerank':f_pagerank, \
+    'weighted_pagerank:': f_weighted_pagerank, \
     'degree':f_degree, \
     'total_export':f_weight_sum, \
     'total_import':f_reverse_weight_sum, \
@@ -250,7 +259,7 @@ def convertNodalFeaturesToEdgeFeatures(countries,years, nodefeatureDict):
       for c1 in countries:
        for c2 in countries:
           edgeData[f1][(c1, c2)]=nodefeatureDict[year][feature][c1]
-          edgeData[f2][(c2, c1)]=nodefeatureDict[year][feature][c2]
+          edgeData[f2][(c1, c2)]=nodefeatureDict[year][feature][c2]
   return edgeData
 
 
@@ -303,7 +312,8 @@ def getEdgeFeatureCSV(years):
 
 
 if __name__ == '__main__':
-  years = range(1999,2001)  
+  years = range(1999,2001) 
+  node_feature_extraction(years, nodefeatureDict) 
   featureData = getEdgeFeatureCSV(years)
 
   
