@@ -144,12 +144,15 @@ def f_clustering(G,year=False):
   return f_macro(G.to_undirected(),lambda G, n: nx.clustering(G,n,'weight'))
 
 def f_gdp_abs(G,year):
-  g = get_subgraph(get_graph(year, "essex"),countries)
-  return f_macro(g, lambda G, n: G.node[n]['gdp']*G.node[n]['pop'])
+  for n in G.nodes():
+    print n
+    print G.node[n]['gdp']
+  #g = get_subgraph(get_graph(year, "essex"),countries)
+  return f_macro(G, lambda G, n: G.node[n]['gdp']*G.node[n]['pop'])
 
 def f_population(G,year):
-  g = get_subgraph(get_graph(year, "essex"),countries)
-  return f_macro(g, lambda G, n: G.node[n]['pop'])
+  #g = get_subgraph(get_graph(year, "essex"),countries)
+  return f_macro(G, lambda G, n: G.node[n]['pop'])
 
 def f_gdp_rank(G,year):
   absGDP = f_gdp_abs(G,year)
@@ -215,6 +218,7 @@ def node_feature_extraction(years,featureDict,resource):
   for year in years:
     print year
     G = get_graph(year,resource)
+    G = G.subgraph(countries)
     featureData[year] = {}
     for f in featureDict:
       featureData[year][f] = featureDict[f](G,year)
