@@ -1,5 +1,5 @@
 import networkx as nx
-from utils import get_graph, read, convert_country_code, ct_to_wb, check_path, write
+from utils import get_graph, read, convert_country_code, ct_to_wb, check_path, write, get_subgraph
 import operator
 import numpy as np
 import matplotlib.pyplot as plt
@@ -144,10 +144,12 @@ def f_clustering(G,year=False):
   return f_macro(G.to_undirected(),lambda G, n: nx.clustering(G,n,'weight'))
 
 def f_gdp_abs(G,year):
-  return f_macro(get_graph(year, "essex"), lambda G, n: G.node[n]['gdp']*G.node[n]['pop'])
+  g = get_subgraph(get_graph(year, "essex"),countries)
+  return f_macro(g, lambda G, n: G.node[n]['gdp']*G.node[n]['pop'])
 
 def f_population(G,year):
-  return f_macro(get_graph(year, "essex"), lambda G, n: G.node[n]['pop'])
+  g = get_subgraph(get_graph(year, "essex"),countries)
+  return f_macro(g, lambda G, n: G.node[n]['pop'])
 
 def f_gdp_rank(G,year):
   absGDP = f_gdp_abs(G,year)
@@ -254,16 +256,23 @@ def convertNodalFeaturesToEdgeFeatures(countries,years, nodefeatureDict):
             #print nodefeatureDict[year][feature]
   return edgeData
 
+from pprint import pprint
+
 def getEdgeFeatureCSV(years,resource):
   gs={}
-  cList=[]
+  global countries
+  cList =[]
   As=[]
   
   for y in years:
     gs[y]=get_graph(y, resource)
     e = get_graph(y,'essex')
     cList.append(set(gs[y].nodes()))
-    cList.append(e.nodes())
+    cList.append(set(e.nodes()))
+    #print 'For the year'
+    #pprint(gs[y].nodes())
+    #pprint(e.nodes())
+  #pprint(cList)
   countries = list(set.intersection(*cList))
   print 'Countries included so far:'
   print countries
