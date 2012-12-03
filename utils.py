@@ -19,9 +19,15 @@ def get_graph(year, resource, subgraph = []):
     #G = prune_countries(G) #Remove the naughty list
     #G = get_subgraph(G, subgraph)
     eu = ['USA','Austria','Belgium','Bulgaria','Cyprus','Czech Republic','Denmark','Estonia','Finland','France','Germany','Greece','Hungary','Ireland','Italy','Latvia','Lithuania','Luxembourg','Malta','Netherlands','Poland','Portugal','Romania','Slovakia','Slovenia','Spain','Sweden','United Kingdom']
-    G = get_subgraph(G, eu)
-    qq = read('data/raw/countryNamesToEssexCodes')
-    return nx.relabel_nodes(G,qq)
+    #G = get_subgraph(G, eu)
+    qq = read('data/raw/countryCodes')
+    G2 = nx.relabel_nodes(G.subgraph(eu),qq)
+    G3 = read("data/raw/essex/pickles/"+str(year))
+    for n in list(set(G2.nodes()).intersection(set(G3.nodes()))):
+      G2.node[n]['gdp'] = G3.node[n]['gdp']
+      G2.node[n]['pop'] = G3.node[n]['pop']
+      print [n,G2.node[n]['gdp']]
+    return G2
 
 def convert_country_code(D,converter):
   if type(D)==type({}):
