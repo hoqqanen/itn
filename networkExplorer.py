@@ -12,9 +12,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 #from random import 
 import math
+
 from featureExtract import f_distance_pairs
 from plfit import plfit
 from scipy import stats
+#from featureExtract import getFeatureMatrix
+#from plfit import plfit
 
 
 
@@ -189,7 +192,7 @@ def degreeDistributions(years, resource):
     plt.savefig(get_images_directory(resource)+'degreeHist'+str(y)+'.png')
     plt.clf()
 
-
+from math import log
 def linkRatioStats(filepath):
   yearlyRatios = read(filepath)
   means = []
@@ -204,7 +207,7 @@ def linkRatioStats(filepath):
       bins=np.arange(0, 3, 0.01)
       hist=np.histogram(ratioData, density=True, bins=bins)[0]
       #n, bins, patches = plt.hist(ratioData, normed=1, facecolor='green', alpha=0.75, bins=np.arange(0, 3, 0.01))
-      plt.loglog(bins[1:],hist,'r', marker='o')
+      plt.scatter(map(lambda x: log(x),bins[1:]),map(lambda x: log(x),hist),'r', marker='o')
       plt.xlabel('Export Ratio exp(t)/exp(t+1)')
       plt.ylabel('Probability')
       plt.title("Export Ratio Distribution"+str(year))
@@ -292,6 +295,31 @@ def trade_reciprocity(years,resource):
   plt.clf()
   return 0
 
+def summary_stats(years,resource):
+  assortativities = []
+  clusterings = []
+  densities = []
+  wwassort = []
+  for year in years:
+    G = get_graph(year,resource)
+    for country in G.nodes():
+      ww = sum(map(lambda x: x[2]['weight'], G.edges(country,data=True)))
+      G.node[country]['ww'] = ww
+    #assortativities.append(nx.degree_assortativity_coefficient(G))
+    #clusterings.append(nx.average_clustering(G.to_undirected()))
+    #densities.append(len(G.edges())/(len(G.nodes())*len(G.nodes())+0.0))
+    wwassort.append(nx.attribute_assortativity_coefficient(G,'ww'))
+    #print [year, ]
+  plt.clf()
+  plt.plot(years,wwassort)
+  plt.title('Assortativity by Node Weight')
+  plt.xlabel('Year')
+  plt.ylabel('Assortativity by Weight')
+  directory = get_images_directory(resource)
+  plt.savefig(directory+'assortweight.png')
+  return 0
+
+import operator
 if __name__ == '__main__':
   years = range(1950,2001)
   #resources = {'total':['sitc-total', 'S1_TOTAL']}
@@ -312,6 +340,38 @@ if __name__ == '__main__':
     #macroEvolution(years, resource)
     #visualizeGraphs(years,resource)
     dist_cor(years, resource)
+    #summary_stats(years,resource)
+    clist = ['USA','GFR','JPN','UKG','CAN','FRN', 'ITA']
+    clist2 = {'USA':'b', 'GFR':'r', 'JPN':'g', 'UKG':'m', 'CAN':'k', 'FRN':'c', 'ITA':'y'}
+    cd = {}
+    for c in clist:
+      cd[c] = []
+    for y in years:
+      G = get_graph(y,r)
+      qq = sorted(nx.pagerank(G).iteritems(),key=operator.itemgetter(1), reverse=True)
+      qqq = nx.pagerank(G) 
+      for c in clist:
+        cd[c].append(qqq[c])
+      print [y,qq[0:6]]
+    plt.clf()
+    for c in clist:
+      plt.plot(years,cd[c],clist2[c],label=c)
+    plt.title('Pagerank of top Countries')
+    plt.legend( ('USA','GFR','JPN','UKG','CAN','FRN', 'ITA'),loc='upper left')
+    plt.xlabel('Year')
+    plt.ylabel('Pagerank')
+    #plt.show()
+    directory = get_images_directory(r)
+    plt.savefig(directory+'pagerank.png')
+    """
+    linkRatioStats(get_results_directory(resource)+'ratios')
+    
+    degreeDistributions(years, resource)
+    trade_reciprocity(years,resource)
+    p_newEdge_degree(years, resource)
+    macroEvolution(years, resource)
+    visualizeGraphs(years,resource)
+    """
     #PCA(years, resource, ["AFG"], "proportion")
     #a, labels=getFeatureMatrix(1999)
     #getTradeMatrix(years, resource, None, "raw" )

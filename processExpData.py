@@ -118,7 +118,7 @@ gs={}
 for year in years:
   gs[year]=nx.DiGraph()
 
-ifile  = open('data/raw/expdata.asc', "rb")
+ifile  = open('data/raw/exptradegdpv4.1/expdata.asc', "rb")
 reader = csv.reader(ifile, delimiter=' ')
 
 rownum = 0
