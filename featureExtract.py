@@ -52,6 +52,30 @@ def f_to_csv(featureData,filepath,year):
   return True
 
 
+def f_distance_pairs(G, countries,  year):
+    """Return a dict that maps country code tuples to distance values. Since
+    these values don't change over time, we can build them just once.
+    """
+    #try:
+    #    return f_distance_pairs.data
+    #except AttributeError:
+    #    pass
+
+    returned = {}
+    with open('data/raw/distances.csv', 'r') as f:
+        reader = csv.reader(f)
+        for line in reader:
+            key = (line[0], line[1])  # commodity codes
+            value = float(line[2])    # distance in kilometers
+            returned[key] = value
+
+    distDict={}
+    missing={}
+    for c1 in countries:
+      for c2 in countries:
+        distDict[(c1, c2)]=returned.get((c1, c2) , 0)
+    f_distance_pairs.data = distDict
+    return distDict
 
 def f_export(G, countries, year):
   expDat={}
@@ -117,8 +141,11 @@ def f_macro(G,fn):
   """
   return dict(zip(G.nodes(),map(lambda n:fn(G,n),G.nodes())))
 
-def f_pagerank(G,year=False):
+def f_weighted_pagerank(G,year=False):
   return nx.pagerank(G)
+
+def f_pagerank(G,year=False):
+  return nx.pagerank(G, weight=None)
 
 def f_hits_hubs(G,year=False):
   return nx.hits_numpy(G)[0]
@@ -153,7 +180,7 @@ def f_population(G,year):
 
 def f_gdp_rank(G,year):
   absGDP = f_gdp_abs(G,year)
-  sortedTuples = sorted(absGDP.iteritems(), key=operator.itemgetter(1), reverse=True)
+  sortedTuples = sorted(absGDP.iteritems(), key=operator.itemgetter(1))
   fDat = {}
   rank = 1
   for e in sortedTuples:
@@ -162,42 +189,26 @@ def f_gdp_rank(G,year):
   return fDat
 
 nodefeatureDict = {'gdp rank': f_gdp_rank, \
-    'absolute gdp': f_gdp_abs, \
-    'population': f_population, \
+
+    'gdp': f_gdp_abs, \
+    'pop': f_population, \
     'pagerank':f_pagerank, \
+    'weighted_pagerank:': f_weighted_pagerank, \
     'degree':f_degree, \
-    'weighted edge out sum':f_weight_sum, \
-    'weighted edge in sum':f_reverse_weight_sum, \
-    'number of triangles': f_triangles, \
+    'total_export':f_weight_sum, \
+    'total_import':f_reverse_weight_sum, \
+    'triangles': f_triangles, \
     'clustering': f_clustering, \
-    'hits hubs': f_hits_hubs, \
-    'hits authorities': f_hits_authorities}
+    'hubs': f_hits_hubs, \
+    'authorities': f_hits_authorities}
 
 edgefeatureDict={ 'export': f_export, \
     'import': f_import, \
-    'export diff': f_export_diff, \
-    'import diff': f_import_diff}
+    'export_diff': f_export_diff, \
+    'import_diff': f_import_diff, \
+    'dist':f_distance_pairs}
 
-def f_distance_pairs(G, year):
-    """Return a dict that maps country code tuples to distance values. Since
-    these values don't change over time, we can build them just once.
-    """
-    try:
-        return f_distance_pairs.data
-    except AttributeError:
-        pass
 
-    returned = {}
-    with open('data/raw/distances.csv', 'r') as f:
-        reader = csv.reader(f)
-        for line in reader:
-            key = (line[0], line[1])  # commodity codes
-            value = float(line[2])    # distance in kilometers
-            returned[key] = value
-
-    # Cache data for later calls
-    f_distance_pairs.data = returned
-    return returned
 
 ###Extraction Code
 def node_feature_extraction(years,featureDict):
@@ -248,7 +259,7 @@ def convertNodalFeaturesToEdgeFeatures(countries,years, nodefeatureDict):
       for c1 in countries:
        for c2 in countries:
           edgeData[f1][(c1, c2)]=nodefeatureDict[year][feature][c1]
-          edgeData[f2][(c2, c1)]=nodefeatureDict[year][feature][c2]
+          edgeData[f2][(c1, c2)]=nodefeatureDict[year][feature][c2]
   return edgeData
 
 
@@ -301,7 +312,8 @@ def getEdgeFeatureCSV(years):
 
 
 if __name__ == '__main__':
-  years = range(1999,2001)  
+  years = range(1999,2001) 
+  node_feature_extraction(years, nodefeatureDict) 
   featureData = getEdgeFeatureCSV(years)
 
   
