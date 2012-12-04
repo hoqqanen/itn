@@ -1,12 +1,10 @@
 import networkx as nx
-from utils import get_graph, read, convert_country_code, ct_to_wb, check_path, write
+from utils import get_graph, read, convert_country_code, ct_to_wb, check_path, write, get_subgraph
 import operator
 import numpy as np
 import matplotlib.pyplot as plt
 import csv
 import copy
-
-
 
 ###Special Utility
 def feature_reformat(featureData):
@@ -40,8 +38,8 @@ def f_to_csv(featureData,filepath,year):
   formatted = feature_reformat(featureData)
   formattedAgain = [] #Turn it from a dictionary into a list
   for c in formatted:
-    boo = [c]
-    boo.extend(formatted[c])
+    boo = [c.encode('ascii', 'ignore')]
+    boo.extend(map(lambda x: x if type(x)!=type(' ') else x.encode('ascii', 'ignore'), formatted[c]))
     formattedAgain.append(boo)
 
   check_path(filepath)
@@ -52,30 +50,6 @@ def f_to_csv(featureData,filepath,year):
   return True
 
 
-def f_distance_pairs(G, countries,  year):
-    """Return a dict that maps country code tuples to distance values. Since
-    these values don't change over time, we can build them just once.
-    """
-    #try:
-    #    return f_distance_pairs.data
-    #except AttributeError:
-    #    pass
-
-    returned = {}
-    with open('data/raw/distances.csv', 'r') as f:
-        reader = csv.reader(f)
-        for line in reader:
-            key = (line[0], line[1])  # commodity codes
-            value = float(line[2])    # distance in kilometers
-            returned[key] = value
-
-    distDict={}
-    missing={}
-    for c1 in countries:
-      for c2 in countries:
-        distDict[(c1, c2)]=returned.get((c1, c2) , 0)
-    f_distance_pairs.data = distDict
-    return distDict
 
 def f_export(G, countries, year):
   expDat={}
@@ -139,13 +113,10 @@ def f_macro(G,fn):
   A special feature extraction utility function that takes 
   a graph and a lambda fn which has signature G,n -> val.
   """
-  return {n: fn(G,n) for n in G.nodes()}
-
-def f_weighted_pagerank(G,year=False):
-  return nx.pagerank(G)
+  return dict(zip(G.nodes(),map(lambda n:fn(G,n),G.nodes())))
 
 def f_pagerank(G,year=False):
-  return nx.pagerank(G, weight=None)
+  return nx.pagerank(G)
 
 def f_hits_hubs(G,year=False):
   return nx.hits_numpy(G)[0]
@@ -173,14 +144,19 @@ def f_clustering(G,year=False):
   return f_macro(G.to_undirected(),lambda G, n: nx.clustering(G,n,'weight'))
 
 def f_gdp_abs(G,year):
+  for n in G.nodes():
+    print n
+    print G.node[n]['gdp']
+  #g = get_subgraph(get_graph(year, "essex"),countries)
   return f_macro(G, lambda G, n: G.node[n]['gdp']*G.node[n]['pop'])
 
 def f_population(G,year):
+  #g = get_subgraph(get_graph(year, "essex"),countries)
   return f_macro(G, lambda G, n: G.node[n]['pop'])
 
 def f_gdp_rank(G,year):
   absGDP = f_gdp_abs(G,year)
-  sortedTuples = sorted(absGDP.iteritems(), key=operator.itemgetter(1))
+  sortedTuples = sorted(absGDP.iteritems(), key=operator.itemgetter(1), reverse=True)
   fDat = {}
   rank = 1
   for e in sortedTuples:
@@ -189,29 +165,45 @@ def f_gdp_rank(G,year):
   return fDat
 
 nodefeatureDict = {'gdp rank': f_gdp_rank, \
-
-    'gdp': f_gdp_abs, \
-    'pop': f_population, \
+    'absolute gdp': f_gdp_abs, \
+    'population': f_population, \
     'pagerank':f_pagerank, \
-    'weighted_pagerank:': f_weighted_pagerank, \
     'degree':f_degree, \
-    'total_export':f_weight_sum, \
-    'total_import':f_reverse_weight_sum, \
-    'triangles': f_triangles, \
+    'weighted edge out sum':f_weight_sum, \
+    'weighted edge in sum':f_reverse_weight_sum, \
+    'number of triangles': f_triangles, \
     'clustering': f_clustering, \
-    'hubs': f_hits_hubs, \
-    'authorities': f_hits_authorities}
+    'hits hubs': f_hits_hubs, \
+    'hits authorities': f_hits_authorities}
 
 edgefeatureDict={ 'export': f_export, \
     'import': f_import, \
-    'export_diff': f_export_diff, \
-    'import_diff': f_import_diff, \
-    'dist':f_distance_pairs}
+    'export diff': f_export_diff, \
+    'import diff': f_import_diff}
 
+def f_distance_pairs(G, year):
+    """Return a dict that maps country code tuples to distance values. Since
+    these values don't change over time, we can build them just once.
+    """
+    try:
+        return f_distance_pairs.data
+    except AttributeError:
+        pass
 
+    returned = {}
+    with open('data/raw/distances.csv', 'r') as f:
+        reader = csv.reader(f)
+        for line in reader:
+            key = (line[0], line[1])  # commodity codes
+            value = float(line[2])    # distance in kilometers
+            returned[key] = value
+
+    # Cache data for later calls
+    f_distance_pairs.data = returned
+    return returned
 
 ###Extraction Code
-def node_feature_extraction(years,featureDict):
+def node_feature_extraction(years,featureDict,resource):
   """
   Saves pickle of and returns a dict of feature dicts in the form
         {year:{featureName:{countryCode:featureValue}}}
@@ -225,23 +217,24 @@ def node_feature_extraction(years,featureDict):
   featureData = {}
   for year in years:
     print year
-    G = get_graph(year,'essex')
+    G = get_graph(year,resource)
+    G = G.subgraph(countries)
     featureData[year] = {}
     for f in featureDict:
       featureData[year][f] = featureDict[f](G,year)
-    write(featureData[year],'data/raw/essex/features/pickle/',str(year))
-    f_to_csv(featureData[year],'data/raw/essex/features/csv/',str(year))
+    write(featureData[year],'data/raw/features/'+resource[0]+'/pickle/',str(year))
+    f_to_csv(featureData[year],'data/raw/features/'+resource[0]+'/csv/',str(year))
   return featureData
 
 
 
 ###Extraction Code
-def edge_feature_extraction(years, countries, featureDict):
+def edge_feature_extraction(years, countries, featureDict, resource):
   
   featureData = {}
   for year in years:
     print year
-    G = get_graph(year,'essex')
+    G = get_graph(year,resource)
     for f in featureDict:
       featureData[f+str(year)] = featureDict[f](G, countries ,year)
   return featureData
@@ -258,34 +251,48 @@ def convertNodalFeaturesToEdgeFeatures(countries,years, nodefeatureDict):
       edgeData[f2]={}
       for c1 in countries:
        for c2 in countries:
-          edgeData[f1][(c1, c2)]=nodefeatureDict[year][feature][c1]
-          edgeData[f2][(c1, c2)]=nodefeatureDict[year][feature][c2]
+          try:
+            edgeData[f1][(c1, c2)]=nodefeatureDict[year][feature][c1]
+            edgeData[f2][(c2, c1)]=nodefeatureDict[year][feature][c2]
+          except KeyError:
+            #print nodefeatureDict[year][feature]
+            print [c1,c2]
+            #print nodefeatureDict[year][feature]
   return edgeData
 
+from pprint import pprint
 
-def getEdgeFeatureCSV(years):
+def getEdgeFeatureCSV(years,resource):
   gs={}
-  cList=[]
+  global countries
+  cList =[]
   As=[]
   
   for y in years:
-    gs[y]=get_graph(y, "essex")
+    gs[y]=get_graph(y, resource)
+    e = get_graph(y,'essex')
     cList.append(set(gs[y].nodes()))
+    cList.append(set(e.nodes()))
+    #print 'For the year'
+    #pprint(gs[y].nodes())
+    #pprint(e.nodes())
+  #pprint(cList)
   countries = list(set.intersection(*cList))
+  print 'Countries included so far:'
+  print countries
 
-  
   edgefeatureYears=years[:-1]
   nodefeatureYear=years[-2]
   nodefeatureYears=[nodefeatureYear]
 
-  nodefeatures=node_feature_extraction(nodefeatureYears,nodefeatureDict)
-  edgefeatures=edge_feature_extraction(edgefeatureYears, countries, edgefeatureDict)
+  nodefeatures=node_feature_extraction(nodefeatureYears,nodefeatureDict,resource)
+  edgefeatures=edge_feature_extraction(edgefeatureYears, countries, edgefeatureDict,resource)
   nodeToEdgeFeatures=convertNodalFeaturesToEdgeFeatures(countries, nodefeatureYears, nodefeatures)
   edgefeatures.update(nodeToEdgeFeatures)
 
   features=edgefeatures.keys()
-  print features
-  filename=open('edgedata.csv', 'wb')
+  check_path('data/raw/features/'+resource[0]+'/edgedata/')
+  filename=open('data/raw/features/'+resource[0]+'/edgedata/'+str(years[-1])+'.csv', 'wb')
   writer = csv.writer(filename)
   fnames=copy.deepcopy(features)
   fnames.append("t")
@@ -312,29 +319,9 @@ def getEdgeFeatureCSV(years):
 
 
 if __name__ == '__main__':
-<<<<<<< HEAD
-<<<<<<< Updated upstream
   years = range(1999,2001)  
-=======
-  years = range(1999,2001) 
-  node_feature_extraction(years, nodefeatureDict) 
->>>>>>> b3751db9ac4540034818b8a4554c31658d7f7152
-  featureData = getEdgeFeatureCSV(years)
+  resource = ['fuelOil19882011', '27']
+  print 'Doing for fuel, but nodal only. Edge is broken.'
+  featureData = getEdgeFeatureCSV(years,resource)
 
   
-=======
-  years = range(2000,2001)
-  featureDict = {'gdp rank': f_gdp_rank,
-    'absolute gdp': f_gdp_abs,
-    'pagerank':f_pagerank,
-    'degree':f_degree,
-    'weighted edge out sum':f_weight_sum,
-    'weighted edge in sum':f_reverse_weight_sum,
-    'number of triangles': f_triangles,
-    'clustering': f_clustering,
-    'hits hubs': f_hits_hubs,
-    'hits authorities': f_hits_authorities,
-    'distance pairs': f_distance_pairs,
-    }
-  featureData = feature_extraction(years,featureDict)
->>>>>>> Stashed changes
