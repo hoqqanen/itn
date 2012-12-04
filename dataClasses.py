@@ -1,3 +1,5 @@
+"""Unused / deprecated"""
+
 class IndicatorData:
   def __init__(self, indicator, description, data):
     self.indicator = indicator

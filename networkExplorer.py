@@ -1,14 +1,13 @@
-import api.comtrade as ct
-import networkx as nx
+import csv
 import os
 import pickle
+from random import sample
+
 import matplotlib
 import matplotlib.pyplot as plt
-from utils import get_graph, check_path, read, write, prune_countries, plot_distribution, degree_distribution, get_images_directory, get_results_directory
+import networkx as nx
 import numpy as np
-import csv
-#import scipy
-import numpy as np
+<<<<<<< Updated upstream
 import matplotlib.pyplot as plt
 #from random import 
 import math
@@ -19,29 +18,42 @@ from plfit import plfit
 
 
 def getTradeMatrix(years, resource, toCountries, datatype):
+=======
+# import scipy
+
+import api.comtrade as ct
+import config
+from utils import get_graph, check_path, read, write, prune_countries, plot_distribution, degree_distribution, get_images_directory, get_results_directory
+
+def PCA(years, resource, toCountries, typen):
+  assert len(toCountries) == 1
+>>>>>>> Stashed changes
   gs={}
   cList=[]
   for y in years:
     gs[y]=get_graph(y, resource)
     cList.append(set(gs[y].nodes()))
   countries = list(set.intersection(*cList))
+<<<<<<< Updated upstream
   print countries
   if toCountries==None:
     toCountries=countries
 
   print "num countries afer intersection", len(countries)
+=======
+  print "num countries afer intersection: %s" % len(countries)
+>>>>>>> Stashed changes
     
   n=len(years)*len(toCountries)
   m=len(countries)
   a=np.ones((m,n))
   
-
-  for k in range(len(countries)):
-    for i in range(len(years)):
-      for j in range(len(toCountries)):
+  for c, country in enumerate(countries):
+    for y, year in enumerate(years):
+      for t, toCountry in enumerate(toCountries):
         try:
-          a[k, (i+1)*(j+1)-1]=gs[years[i]][countries[k]][toCountries[j]]["weight"]
-        except:
+          a[c, (y+1)*(t+1)-1] = gs[year][country][toCountry]['weight']
+        except IndexError:
           pass
   if datatype=="raw":
     np.savetxt("raw.csv", a, delimiter=",")
@@ -49,8 +61,8 @@ def getTradeMatrix(years, resource, toCountries, datatype):
   cy=np.zeros((m, len(years)))
   for c in range(m):
     print countries[c]
-    for y in range(len(years)):
-      tt=sum([gs[years[y]][countries[c]][to]["weight"] for to in gs[years[y]][countries[c]]])
+    for y, year in enumerate(yeras)::
+      tt=sum([gs[year][countries[c]][to]["weight"] for to in gs[year][countries[c]]])
       if tt==0:
         tt=1
       cy[c, y]=tt
@@ -264,6 +276,23 @@ def trade_reciprocity(years,resource):
   plt.savefig(directory+'meanReciprocityCorrelation.png')
   plt.clf()
   return 0
+
+def distance_correlation(years, resource):
+    """Correlation of pairwise distance with GDP."""
+    corrcoefs = []
+    
+    for year in years:
+        G = get_graph(year, resource)
+        for country in G:
+            x_coords = [1 for e1, o2 in G.edges(country)
+            y_coords = [G[e1][e2]['weight'] for e1, e2 in G.edges(country)]
+            corrcoef = np.corrcoef([x_coords, y_coords])
+
+    plt.plot(years, corrmeans)
+    plt.title('Mean correlation of Distance/Import By Year')
+    directory = get_image_directory(resource)
+    plt.savefig(os.path.join(directory, 'distance-import.png')
+    plt.clf()
 
 if __name__ == '__main__':
   years = range(1950,2001)

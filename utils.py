@@ -1,11 +1,10 @@
 import os
 import pickle
-import networkx as networkx
-import api.comtrade as ct
 import matplotlib
 import matplotlib.pyplot as plt
+import networkx as networkx
 
-
+import api.comtrade as ct
 
 def get_graph(year, resource):
   if resource=="essex":

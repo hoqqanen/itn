@@ -1,8 +1,11 @@
+"""
+Read in Essex data and save the picked results.
+"""
+
 import csv
 import networkx as nx
-import csv
-from utils import check_path, read, write, prune_countries, plot_distribution, degree_distribution
 
+from utils import check_path, read, write, prune_countries, plot_distribution, degree_distribution
 
 years=range(1950, 2001,1)
 gs={}

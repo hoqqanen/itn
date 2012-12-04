@@ -115,7 +115,7 @@ def f_macro(G,fn):
   A special feature extraction utility function that takes 
   a graph and a lambda fn which has signature G,n -> val.
   """
-  return dict(zip(G.nodes(),map(lambda n:fn(G,n),G.nodes())))
+  return {n: fn(G,n) for n in G.nodes()}
 
 def f_pagerank(G,year=False):
   return nx.pagerank(G)
@@ -297,7 +297,24 @@ def getEdgeFeatureCSV(years):
 
 
 if __name__ == '__main__':
+<<<<<<< Updated upstream
   years = range(1999,2001)  
   featureData = getEdgeFeatureCSV(years)
 
   
+=======
+  years = range(2000,2001)
+  featureDict = {'gdp rank': f_gdp_rank,
+    'absolute gdp': f_gdp_abs,
+    'pagerank':f_pagerank,
+    'degree':f_degree,
+    'weighted edge out sum':f_weight_sum,
+    'weighted edge in sum':f_reverse_weight_sum,
+    'number of triangles': f_triangles,
+    'clustering': f_clustering,
+    'hits hubs': f_hits_hubs,
+    'hits authorities': f_hits_authorities,
+    'distance pairs': f_distance_pairs,
+    }
+  featureData = feature_extraction(years,featureDict)
+>>>>>>> Stashed changes
