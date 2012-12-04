@@ -1,3 +1,13 @@
+"""
+Basic API for working with the Commodity Flow Survey dataset, which
+records pairwise trade between states for certain commodities.
+
+This has been tested on the 2002 survey. More data to come soon, I hope.
+
+:author: akprasad
+"""
+
+
 import csv
 import os
 from collections import Counter
